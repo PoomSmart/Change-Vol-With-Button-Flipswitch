@@ -1,7 +1,10 @@
-Package: org.thebigboss.changevolwithbtnfs
-Name: Change Vol With Buttons FS
-Depends: mobilesubstrate, com.a3tweaks.flipswitch
-Version: 0.0.1
+Package: com.ps.changevolwithbuttonflipswitch
+Name: Change Vol With Buttons Flipswitch
+Depends: mobilesubstrate, com.a3tweaks.flipswitch, firmware (>= 11.0)
+Provides: org.thebigboss.changevolwithbtnfs
+Replaces: org.thebigboss.changevolwithbtnfs
+Conflicts: org.thebigboss.changevolwithbtnfs
+Version: 1.0.0
 Architecture: iphoneos-arm
 Description: Flipswitch for volume change with buttons
 Maintainer: PoomSmart

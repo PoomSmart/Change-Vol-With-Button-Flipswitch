@@ -1,3 +1,5 @@
+#import <CoreFoundation/CoreFoundation.h>
+#import <Foundation/Foundation.h>
 #import <Flipswitch/FSSwitchDataSource.h>
 #import <Flipswitch/FSSwitchPanel.h>
 
@@ -9,46 +11,43 @@ NSString *const kSwitchIdentifier = @"com.PS.ChangeVolWithBtn";
 extern "C" NSString *AVController_ClientNameAttribute;
 extern "C" NSString *AVController_WantsVolumeChangesWhenPausedOrInactive;
 
-extern "C" id MGCopyAnswer(NSString *);
-extern "C" BOOL MGGetBoolAnswer(NSString *);
+extern "C" id MGCopyAnswer(CFStringRef);
+extern "C" bool MGGetBoolAnswer(CFStringRef);
 
 @interface AVController : NSObject
 - (bool)setAttribute:(id)attribute forKey:(id)key error:(NSError *)error;
 @end
 
-@interface ChangeVolWithBtnSwitch : NSObject <FSSwitchDataSource> {
+@interface ChangeVolWithButtonSwitch : NSObject <FSSwitchDataSource> {
 	AVController *avController;
 }
 @end
 
 int deviceType = 0;
 
-static void PreferencesChanged()
-{
+static void PreferencesChanged() {
 	[[FSSwitchPanel sharedPanel] stateDidChangeForSwitchIdentifier:kSwitchIdentifier];
 }
 
-@implementation ChangeVolWithBtnSwitch
+@implementation ChangeVolWithButtonSwitch
 
-- (id)init
-{
+- (id)init {
 	if (self == [super init]) {
 		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)PreferencesChanged, kPrefsSoundNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
-		self->avController = [[AVController alloc] init];
+		self->avController = [[%c(AVController) alloc] init];
 		[self->avController setAttribute:@"Preferences" forKey:AVController_ClientNameAttribute error:nil];
 		[self->avController setAttribute:@(NO) forKey:AVController_WantsVolumeChangesWhenPausedOrInactive error:nil];
 	}
 	return self;
 }
 
-- (int)deviceType
-{
+- (int)deviceType {
 	if (deviceType == 0) {
-		NSString *deviceName = [[[MGCopyAnswer(@"DeviceName") lowercaseString] retain] autorelease];
+		NSString *deviceName = [[[MGCopyAnswer(CFSTR("DeviceName")) lowercaseString] retain] autorelease];
 		if ([deviceName isEqualToString:@"iphone"])
 			deviceType = 1;
 		else {
-			if (MGGetBoolAnswer(@"any-telephony"))
+			if (MGGetBoolAnswer(CFSTR("any-telephony")))
 				deviceType = 2;
 			else
 				deviceType = 3;
@@ -57,16 +56,14 @@ static void PreferencesChanged()
 	return deviceType;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
 	[self->avController release];
 	self->avController = nil;
 	CFNotificationCenterRemoveObserver(CFNotificationCenterGetDarwinNotifyCenter(), self, kPrefsSoundNotification, NULL);
 	[super dealloc];
 }
 
-- (FSSwitchState)stateForSwitchIdentifier:(NSString *)switchIdentifier
-{
+- (FSSwitchState)stateForSwitchIdentifier:(NSString *)switchIdentifier {
 	Boolean keyExist;
 	Boolean enabled = CFPreferencesGetAppBooleanValue(kChangeVolWithBtnKey, kPrefsSound, &keyExist);
 	if (!keyExist)
@@ -78,8 +75,7 @@ static void PreferencesChanged()
 	return enabled ? FSSwitchStateOn : FSSwitchStateOff;
 }
 
-- (void)applyState:(FSSwitchState)newState forSwitchIdentifier:(NSString *)switchIdentifier
-{
+- (void)applyState:(FSSwitchState)newState forSwitchIdentifier:(NSString *)switchIdentifier {
 	if (newState == FSSwitchStateIndeterminate)
 		return;
 	CFBooleanRef enabled = newState == FSSwitchStateOn ? kCFBooleanTrue : kCFBooleanFalse;
